@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Zamanın Tanıkları — Kişisel Zaman Gazetesi</title>
+<meta name="description" content="T.C. Ankara Valiliği Kültür - Sanat Evi saat sergisi kiosk uygulaması">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&family=IM+Fell+English:ital@0;1&family=Special+Elite&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  background:#f5f0e0;color:#1a1410;
+  font-family:'IM Fell English',Georgia,serif;
+  min-height:100vh;
+  background-image:
+    repeating-linear-gradient(0deg,transparent,transparent 27px,rgba(0,0,0,0.025) 28px),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  -webkit-user-select:none;user-select:none;
+  -webkit-tap-highlight-color:transparent;
+}
+.page{max-width:800px;margin:0 auto;padding:0 20px 56px;}
+
+#kiosk-bar{background:#1a1410;color:#f5f0e0;padding:7px 20px;display:flex;justify-content:space-between;align-items:center;font-family:'Special Elite',monospace;font-size:10px;letter-spacing:0.15em;position:sticky;top:0;z-index:100;}
+#kiosk-bar.hidden{display:none;}
+#kiosk-timer-track{flex:1;height:3px;background:rgba(245,240,224,0.25);margin:0 14px;border-radius:2px;overflow:hidden;}
+#kiosk-timer-fill{height:100%;background:#e8d5a3;width:100%;transition:width 1s linear;}
+#kiosk-countdown{min-width:28px;text-align:right;color:#e8d5a3;}
+
+.masthead{text-align:center;border-bottom:4px double #1a1410;padding:24px 0 14px;margin-bottom:4px;}
+.masthead-top{display:flex;justify-content:center;align-items:center;font-family:'Special Elite',monospace;font-size:10px;letter-spacing:0.08em;color:#666;margin-bottom:8px;}
+.masthead-ornament{font-size:16px;color:#1a1410;letter-spacing:0.3em;}
+.masthead-title{font-family:'UnifrakturMaguntia',serif;font-size:clamp(40px,9vw,76px);line-height:1;color:#1a1410;}
+.masthead-sub{font-family:'Special Elite',monospace;font-size:10px;letter-spacing:0.28em;color:#666;border-top:1px solid #1a1410;border-bottom:1px solid #1a1410;padding:5px 0;margin:8px 30px 0;text-align:center;}
+
+.deck{text-align:center;padding:18px 0 14px;border-bottom:2px solid #1a1410;margin-bottom:26px;}
+.deck-headline{font-family:'Playfair Display',serif;font-size:clamp(18px,3.5vw,30px);font-weight:900;font-style:italic;color:#1a1410;margin-bottom:6px;}
+.deck-sub{font-family:'IM Fell English',serif;font-size:13px;color:#666;font-style:italic;}
+
+.form-section{display:flex;flex-direction:column;align-items:center;gap:14px;padding:22px 20px 20px;border:2px solid #1a1410;background:rgba(255,255,255,0.35);margin-bottom:28px;position:relative;}
+.form-section::before{content:'✦ DOĞUM TARİHİNİZİ GİRİNİZ ✦';position:absolute;top:-10px;background:#f5f0e0;padding:0 12px;font-family:'Special Elite',monospace;font-size:10px;letter-spacing:0.2em;color:#1a1410;}
+.date-inputs{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center;}
+.date-group{display:flex;flex-direction:column;align-items:center;gap:4px;}
+.date-group label{font-family:'Special Elite',monospace;font-size:9px;letter-spacing:0.2em;color:#888;}
+.date-group input,.date-group select{background:#faf7f0;border:1.5px solid #1a1410;font-family:'Special Elite',monospace;font-size:18px;color:#1a1410;text-align:center;padding:8px 10px;width:88px;outline:none;-webkit-appearance:none;border-radius:0;}
+.date-group select{width:118px;cursor:pointer;}
+.date-sep{font-size:26px;color:#1a1410;font-weight:900;padding-top:14px;}
+.submit-btn{background:#1a1410;color:#f5f0e0;border:none;font-family:'Special Elite',monospace;font-size:13px;letter-spacing:0.25em;padding:14px 44px;cursor:pointer;margin-top:6px;transition:background 0.15s;touch-action:manipulation;}
+.submit-btn:hover{background:#3d2e22;}
+.submit-btn:active{transform:scale(0.98);}
+.error-msg{color:#8b0000;font-family:'Special Elite',monospace;font-size:11px;display:none;}
+
+.results{display:none;}
+.results.show{display:block;animation:fadeUp 0.7s ease both;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+
+.result-banner{text-align:center;padding:22px 16px;margin-bottom:20px;background:#1a1410;color:#f5f0e0;border:3px double #e8d5a3;position:relative;overflow:hidden;}
+.result-banner::before{content:'';position:absolute;inset:6px;border:1px solid rgba(232,213,163,0.3);pointer-events:none;}
+.years-label{font-family:'Special Elite',monospace;font-size:10px;letter-spacing:0.35em;color:#a89060;margin-bottom:4px;}
+.years-number{font-family:'Playfair Display',serif;font-size:clamp(56px,14vw,108px);font-weight:900;line-height:1;color:#e8d5a3;}
+.years-text{font-family:'IM Fell English',serif;font-size:17px;font-style:italic;color:#b8a070;margin-top:6px;}
+
+.timeline-section{border:1.5px solid #1a1410;padding:20px 24px 18px;margin-bottom:24px;background:rgba(255,255,255,0.2);}
+.timeline-label{font-family:'Special Elite',monospace;font-size:9px;letter-spacing:0.22em;color:#888;text-align:center;margin-bottom:16px;}
+.timeline-track{position:relative;height:2px;background:#c8bfa8;margin:28px 6% 30px;}
+.timeline-fill{position:absolute;left:0;top:0;height:2px;background:#1a1410;width:0%;transition:width 1.4s cubic-bezier(0.4,0,0.2,1);}
+.timeline-dot-birth{position:absolute;left:0;top:50%;transform:translate(-50%,-50%);width:10px;height:10px;border-radius:50%;border:2px solid #1a1410;background:#f5f0e0;}
+.timeline-dot-now{position:absolute;top:50%;transform:translate(-50%,-50%);width:10px;height:10px;border-radius:50%;background:#1a1410;transition:left 1.4s cubic-bezier(0.4,0,0.2,1);left:0%;}
+.timeline-tick{position:absolute;top:50%;transform:translate(-50%,-50%);width:1px;height:8px;background:#c8bfa8;}
+.timeline-tick-label{position:absolute;top:14px;transform:translateX(-50%);font-family:'Special Elite',monospace;font-size:9px;color:#aaa;white-space:nowrap;}
+.timeline-birth-label{position:absolute;bottom:16px;left:0;font-family:'Special Elite',monospace;font-size:10px;color:#1a1410;white-space:nowrap;font-weight:700;}
+.timeline-now-label{position:absolute;bottom:16px;transform:translateX(-50%);font-family:'Special Elite',monospace;font-size:10px;color:#1a1410;white-space:nowrap;font-weight:700;transition:left 1.4s cubic-bezier(0.4,0,0.2,1);left:0%;}
+
+.section-divider{font-family:'Special Elite',monospace;font-size:9px;letter-spacing:0.3em;color:#888;text-align:center;border-top:1px solid #ccc;border-bottom:1px solid #ccc;padding:5px 0;margin:0 0 16px;}
+
+.stats-columns{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1.5px solid #1a1410;margin-bottom:24px;}
+.stat-item{padding:16px 18px;border-bottom:1px solid #c8bfa8;border-right:1px solid #c8bfa8;display:flex;flex-direction:column;gap:4px;}
+.stat-item:nth-child(even){border-right:none;}
+.stat-item:nth-last-child(-n+2){border-bottom:none;}
+.stat-label-txt{font-family:'Special Elite',monospace;font-size:8px;letter-spacing:0.14em;color:#bbb;}
+.stat-value-txt{font-family:'Playfair Display',serif;font-size:clamp(18px,3.2vw,26px);font-weight:700;color:#1a1410;line-height:1;}
+.stat-desc-txt{font-family:'IM Fell English',serif;font-size:12px;color:#666;font-style:italic;line-height:1.4;}
+
+.history-wrapper{column-count:2;column-gap:24px;column-rule:1px solid #c8bfa8;border:1.5px solid #1a1410;padding:16px;margin-bottom:24px;}
+.history-heading{column-span:all;font-family:'Playfair Display',serif;font-size:16px;font-weight:900;font-style:italic;text-align:center;border-bottom:1px solid #ccc;padding-bottom:8px;margin-bottom:12px;}
+.history-entry{break-inside:avoid;padding:5px 0;border-bottom:1px dashed #ccc;margin-bottom:2px;}
+.history-entry:last-child{border-bottom:none;}
+.history-yr{font-family:'Special Elite',monospace;font-size:10px;color:#888;display:block;margin-bottom:1px;}
+.history-ev{font-family:'IM Fell English',serif;font-size:12px;line-height:1.4;color:#1a1410;}
+.history-cat{font-family:'Special Elite',monospace;font-size:8px;letter-spacing:0.1em;color:#b8a060;display:block;margin-bottom:1px;}
+
+.qr-section{display:flex;align-items:center;gap:18px;padding:14px 16px;border:2px solid #1a1410;background:rgba(255,255,255,0.3);margin-bottom:22px;}
+.qr-text h3{font-family:'Playfair Display',serif;font-size:14px;font-style:italic;margin-bottom:3px;}
+.qr-text p{font-family:'Special Elite',monospace;font-size:9.5px;letter-spacing:0.07em;color:#777;line-height:1.6;}
+#qr-canvas{border:3px solid #1a1410;flex-shrink:0;}
+
+.reset-btn{display:block;width:100%;background:transparent;color:#1a1410;border:1.5px solid #1a1410;font-family:'Special Elite',monospace;font-size:11px;letter-spacing:0.25em;padding:12px;cursor:pointer;margin-bottom:22px;transition:background 0.15s,color 0.15s;touch-action:manipulation;}
+.reset-btn:hover{background:#1a1410;color:#f5f0e0;}
+
+hr.footer-rule{border:none;border-top:3px double #1a1410;margin:12px 0 7px;}
+.footer-text{text-align:center;font-family:'Special Elite',monospace;font-size:9px;letter-spacing:0.18em;color:#aaa;}
+
+@media(max-width:500px){
+  .stats-columns{grid-template-columns:1fr;}
+  .stat-item{border-right:none!important;}
+  .stat-item:nth-last-child(-n+2){border-bottom:1px solid #c8bfa8;}
+  .stat-item:last-child{border-bottom:none;}
+  .history-wrapper{column-count:1;}
+  .qr-section{flex-direction:column;text-align:center;}
+  .date-group input,.date-group select{font-size:16px;padding:10px 8px;}
+}
+</style>
+</head>
+<body>
+
+<div id="kiosk-bar" class="hidden">
+  <span>⏱ Otomatik sıfırlama</span>
+  <div id="kiosk-timer-track"><div id="kiosk-timer-fill"></div></div>
+  <span id="kiosk-countdown">60</span>
+</div>
+
+<div class="page">
+  <div class="masthead">
+    <div class="masthead-top">T.C. ANKARA VALİLİĞİ KÜLTÜR - SANAT EVİ</div>
+    <div class="masthead-ornament">— ✦ —</div>
+    <div class="masthead-title">Zamanın Tanıkları</div>
+    <div class="masthead-sub">KİŞİSEL ZAMAN GAZETESİ</div>
+  </div>
+
+  <div class="deck">
+    <div class="deck-headline">"Kaç yıl geçti? Saatler biliyor."</div>
+    <div class="deck-sub">Doğum tarihinizi girin — zamanınızın haberini okuyun.</div>
+  </div>
+
+  <div class="form-section" id="form-section">
+    <div class="date-inputs">
+      <div class="date-group"><label>GÜN</label><input type="number" id="inp-day" min="1" max="31" placeholder="15" inputmode="numeric"></div>
+      <div class="date-sep">/</div>
+      <div class="date-group">
+        <label>AY</label>
+        <select id="inp-month">
+          <option value="">Ay</option>
+          <option value="1">Ocak</option><option value="2">Şubat</option><option value="3">Mart</option>
+          <option value="4">Nisan</option><option value="5">Mayıs</option><option value="6">Haziran</option>
+          <option value="7">Temmuz</option><option value="8">Ağustos</option><option value="9">Eylül</option>
+          <option value="10">Ekim</option><option value="11">Kasım</option><option value="12">Aralık</option>
+        </select>
+      </div>
+      <div class="date-sep">/</div>
+      <div class="date-group"><label>YIL</label><input type="number" id="inp-year" min="1924" max="2015" placeholder="1975" inputmode="numeric"></div>
+    </div>
+    <div class="error-msg" id="error-msg">Lütfen geçerli bir doğum tarihi giriniz (1924–2015).</div>
+    <button class="submit-btn" onclick="calculate()">▶ ZAMANI HESAPLA</button>
+  </div>
+
+  <div class="results" id="results">
+    <div class="result-banner">
+      <div class="years-label">BU DÜNYADA</div>
+      <div class="years-number" id="res-years">—</div>
+      <div class="years-text" id="res-years-text">—</div>
+    </div>
+
+    <div class="timeline-section">
+      <div class="timeline-label">ZAMANINIZIN İZİ — DOĞUMDAN BUGÜNE</div>
+      <div class="timeline-track" id="tl-track">
+        <div class="timeline-fill" id="tl-fill"></div>
+        <div class="timeline-dot-birth"></div>
+        <div class="timeline-dot-now" id="tl-dot"></div>
+        <div class="timeline-birth-label" id="tl-birth-lbl">—</div>
+        <div class="timeline-now-label" id="tl-now-lbl">Bugün</div>
+        <div id="tl-ticks"></div>
+      </div>
+    </div>
+
+    <div class="section-divider">✦ KİŞİSEL ZAMAN GAZETESİ ✦</div>
+    <div class="stats-columns" id="stats-grid"></div>
+
+    <div class="section-divider">✦ ZAMANINIZIN MANŞETLERİ ✦</div>
+    <div class="history-wrapper">
+      <div class="history-heading">Doğduğunuzda Dünya</div>
+      <div id="history-items"></div>
+    </div>
+
+    <div class="qr-section">
+      <div class="qr-text">
+        <h3>Bu sayfayı telefonunuza alın</h3>
+        <p>QR kodu okutun — kişisel zaman gazeteniz<br>cebinizde saklansın. Sergiye hoş geldiniz.</p>
+      </div>
+      <canvas id="qr-canvas" width="108" height="108"></canvas>
+    </div>
+
+    <button class="reset-btn" onclick="resetForm()">← YENİ BİR TARİH GİR</button>
+  </div>
+
+  <hr class="footer-rule">
+  <div class="footer-text">ZAMANIN TANIKLARI · T.C. ANKARA VALİLİĞİ KÜLTÜR - SANAT EVİ · TÜM VAKİTLER TAHMİNİ ORTALAMALARA DAYANMAKTADIR.</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+const MONTHS_TR=['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+const now=new Date();
+
+const CAT={bilim:'Bilim & Keşif',uzay:'Uzay',tip:'Tıp & Sağlık',sanat:'Sanat & Kültür',spor:'Spor',muzik:'Müzik',doga:'Doğa & Hayvanlar',toplum:'Toplum & Yaşam',teknoloji:'Teknoloji',moda:'Moda & Tasarım'};
+
+const HISTORY={
+  1924:[{c:'spor',e:"Paris Olimpiyatları'nda Türkiye ilk kez bayrak taşıdı."},{c:'muzik',e:"Gershwin'in 'Rhapsody in Blue'su New York'ta sahnelendi."}],
+  1925:[{c:'moda',e:"Coco Chanel, kadınlar için rahat ve zarif giyim anlayışını Paris'te yerleştirdi."},{c:'sanat',e:"Art Deco akımı Paris Uluslararası Dekoratif Sanatlar Sergisi'nde zirveye ulaştı."}],
+  1926:[{c:'teknoloji',e:"Baird, dünyanın ilk gerçek televizyon görüntüsünü Londra'da iletti."},{c:'toplum',e:"Türk Medeni Kanunu yürürlüğe girdi; eşit haklar genişledi."}],
+  1927:[{c:'uzay',e:"Lindbergh, Atlantik'i 33 saatte kesintisiz geçti; havacılık tarihe geçti."},{c:'sanat',e:"Sesli sinema Al Jolson ile dünyaya tanıtıldı."}],
+  1928:[{c:'bilim',e:"Fleming penisilin keşfetti; milyarlarca hayat kurtulacaktı."},{c:'spor',e:"Amsterdam Olimpiyatları'nda kadınlar ilk kez atletizm yarışmalarına katıldı."}],
+  1929:[{c:'sanat',e:"Museum of Modern Art (MoMA) New York'ta kapılarını açtı."},{c:'bilim',e:"Hubble, evrenin genişlediğini kanıtladı."}],
+  1930:[{c:'bilim',e:"Plüton, Clyde Tombaugh tarafından keşfedildi."},{c:'toplum',e:"Türk kadınlarına belediye seçimlerinde oy hakkı tanındı."}],
+  1931:[{c:'sanat',e:"İstanbul Radyosu yayın hayatına başladı; müzik evlere girdi."},{c:'teknoloji',e:"Empire State Binası tamamlandı; dünyanın en yüksek yapısı oldu."}],
+  1932:[{c:'bilim',e:"Nötron keşfedildi; atomun sırları çözülmeye başladı."},{c:'toplum',e:"Türk kadınları milletvekili seçebildi ve seçilebildi."}],
+  1933:[{c:'sanat',e:"King Kong filmi sinema tarihine girdi."},{c:'muzik',e:"Duke Ellington Carnegie Hall'da caz tarihinin unutulmaz konserini verdi."}],
+  1934:[{c:'toplum',e:"İlk modern neon reklamları şehirleri renkli ışıkla aydınlattı."},{c:'bilim',e:"Irène Curie, yapay radyoaktiviteyi keşfetti."}],
+  1935:[{c:'toplum',e:"Soyadı Kanunu ile modern kimlik sistemi Türkiye'de kuruldu."},{c:'teknoloji',e:"Radar sistemi Robert Watson-Watt tarafından ilk kez çalıştırıldı."}],
+  1936:[{c:'spor',e:"Jesse Owens, Berlin Olimpiyatları'nda 4 altın madalya alarak tarihe geçti."},{c:'teknoloji',e:"BBC dünyada ilk düzenli televizyon yayınına başladı."}],
+  1937:[{c:'sanat',e:"Walt Disney'in 'Pamuk Prenses'i ilk uzun metrajlı animasyon film oldu."},{c:'toplum',e:"Golden Gate Köprüsü San Francisco'da açıldı."}],
+  1938:[{c:'teknoloji',e:"Nylon icat edildi; tekstil ve moda devrimi başladı."},{c:'muzik',e:"Benny Goodman Carnegie Hall'da caz tarihinin en büyük konserini verdi."}],
+  1939:[{c:'sanat',e:"Judy Garland'lı 'Oz Büyücüsü' filmi sinema klasiği oldu."},{c:'toplum',e:"New York Dünya Fuarı 'Geleceğin Dünyası' temasıyla milyonları büyüledi."}],
+  1940:[{c:'sanat',e:"Lascaux mağara resimleri Fransa'da keşfedildi; insanlığın ilk sanatı gün yüzüne çıktı."},{c:'teknoloji',e:"Renkli fotoğrafçılık geniş kitlelere ulaşmaya başladı."}],
+  1941:[{c:'toplum',e:"Türkiye'de Köy Enstitüleri eğitimi köylere taşıdı."},{c:'muzik',e:"Glenn Miller orkestrası 'In the Mood' ile tüm dünyayı dans ettirdi."}],
+  1943:[{c:'tip',e:"Cousteau ve Gagnan tüplü dalış ekipmanını geliştirdi."},{c:'bilim',e:"İlk elektronik bilgisayar ENIAC'ın temelleri atıldı."}],
+  1945:[{c:'toplum',e:"Birleşmiş Milletler kuruldu; uluslararası diyalog başladı."},{c:'tip',e:"Penisilin seri üretimi yaygınlaştı; ölümlü enfeksiyonlar azaldı."}],
+  1946:[{c:'teknoloji',e:"ENIAC, ilk genel amaçlı elektronik bilgisayar, çalıştırıldı."},{c:'moda',e:"Bikini mayosu Paris'te tanıtıldı ve moda dünyasını sarstı."}],
+  1947:[{c:'teknoloji',e:"Transistör icat edildi; modern elektroniğin temeli atıldı."},{c:'muzik',e:"Columbia Records uzun çalan (LP) plağı müzik dünyasına tanıttı."}],
+  1948:[{c:'toplum',e:"Dünya Sağlık Örgütü (WHO) kuruldu."},{c:'spor',e:"Londra'da Olimpiyatlar yeniden canlandı; dünya barış içinde yarıştı."}],
+  1950:[{c:'toplum',e:"Kredi kartı (Diners Club) ilk kez kullanıldı."},{c:'sanat',e:"Türkiye'de sinema kültürü hızla yayıldı."}],
+  1952:[{c:'teknoloji',e:"İlk ticari jet uçuşu gerçekleşti; dünya küçülmeye başladı."},{c:'sanat',e:"Anne Frank'ın günlüğü dünya dillerine çevrildi."}],
+  1953:[{c:'bilim',e:"DNA'nın çift sarmal yapısı Watson ve Crick tarafından keşfedildi."},{c:'spor',e:"Everest'in zirvesine Hillary ve Tenzing ilk kez ulaştı."}],
+  1954:[{c:'tip',e:"Polio aşısı duyuruldu; çocuk felci kâbusu sona ermeye başladı."},{c:'spor',e:"Roger Bannister, bir mili 4 dakikanın altında koşan ilk insan oldu."}],
+  1955:[{c:'toplum',e:"Disneyland açıldı; hayal gücünün sınır tanımadığını dünya gördü."},{c:'muzik',e:"Rock and Roll patlaması yaşandı; Elvis Presley sahneye çıktı."}],
+  1956:[{c:'muzik',e:"Elvis Presley 'Heartbreak Hotel' ile müzik dünyasını değiştirdi."},{c:'teknoloji',e:"IBM sabit diski icat etti; veri depolama çağı başladı."}],
+  1957:[{c:'uzay',e:"Sputnik uzaya fırlatıldı; insanlık yıldızlara ulaşmaya başladı."},{c:'muzik',e:"West Side Story müzikali Broadway'de açıldı."}],
+  1958:[{c:'uzay',e:"NASA kuruldu; uzay yarışı resmen başladı."},{c:'spor',e:"Pelé, 17 yaşında Brezilya ile Dünya Kupası'nı kazandı."}],
+  1959:[{c:'moda',e:"Barbie bebek tanıtıldı; oyuncak dünyası kökten değişti."},{c:'muzik',e:"Motown Records kuruldu; soul müziğin altın çağı başladı."}],
+  1960:[{c:'bilim',e:"İlk lazer Theodore Maiman tarafından çalıştırıldı."},{c:'moda',e:"Yves Saint Laurent ilk haute couture koleksiyonunu sundu."}],
+  1961:[{c:'uzay',e:"Yuri Gagarin uzaya giden ilk insan oldu; insanlık sınırlarını aştı."},{c:'muzik',e:"The Beatles Liverpool'da ilk konserini verdi."}],
+  1962:[{c:'uzay',e:"Telstar uydusu ilk canlı transatlantik TV yayınını sağladı."},{c:'muzik',e:"The Rolling Stones kuruldu."}],
+  1963:[{c:'tip',e:"İlk kalp pili hastaya takıldı; kalp hastaları için yeni bir dönem başladı."},{c:'moda',e:"Mary Quant miniskirt'i tanıttı; 60'ların özgürlük sembolü doğdu."}],
+  1964:[{c:'spor',e:"Tokyo Olimpiyatları, ilk kez Asya'da düzenlendi."},{c:'muzik',e:"The Beatles ABD'ye geldi; Beatlemania tüm dünyayı sardı."}],
+  1965:[{c:'uzay',e:"Alexei Leonov, ilk uzay yürüyüşünü gerçekleştirdi."},{c:'sanat',e:"Andy Warhol'un pop art sergisi tüm dünyada yankı uyandırdı."}],
+  1967:[{c:'tip',e:"Christiaan Barnard ilk kalp naklini gerçekleştirdi; tıp tarihi yazıldı."},{c:'muzik',e:"Beatles'ın 'Sgt. Pepper' albümü müziği sanat formuna dönüştürdü."}],
+  1969:[{c:'uzay',e:"Neil Armstrong Ay'a adım attı; insanlık tarihin en büyük adımını attı."},{c:'muzik',e:"Woodstock Festivali 400.000 kişiyi müzik ve barış etrafında buluşturdu."}],
+  1970:[{c:'doga',e:"İlk Dünya Çevre Günü kutlandı; çevre bilinci dünyaya yayıldı."},{c:'muzik',e:"ABBA İsveç'te kuruldu; pop müziğin en ikonik grubu doğdu."}],
+  1971:[{c:'teknoloji',e:"Intel 4004 mikroişlemciyi icat etti."},{c:'doga',e:"Greenpeace çevre koruma hareketi başladı."}],
+  1972:[{c:'spor',e:"Münih Olimpiyatları'nda Mark Spitz 7 altın madalya alarak tarihe geçti."},{c:'tip',e:"CT tarama (tomografi) klinik kullanıma girdi."}],
+  1973:[{c:'toplum',e:"Boğaziçi Köprüsü açıldı; Asya ve Avrupa tek nefeste buluştu."},{c:'muzik',e:"Pink Floyd'un 'Dark Side of the Moon'u 741 hafta listede kaldı."}],
+  1974:[{c:'sanat',e:"Çin'de 8.000 figürlük Terracotta Ordusu keşfedildi."},{c:'toplum',e:"Barkod sistemi ticari alışverişe girdi."}],
+  1975:[{c:'teknoloji',e:"Microsoft Bill Gates ve Paul Allen tarafından kuruldu."},{c:'muzik',e:"Queen 'Bohemian Rhapsody' ile müziğin sınırlarını zorladı."}],
+  1976:[{c:'teknoloji',e:"Apple, Steve Jobs ve Wozniak tarafından garajda kuruldu."},{c:'uzay',e:"Viking 1 Mars yüzeyine indi ve ilk fotoğrafları gönderdi."}],
+  1977:[{c:'uzay',e:"Voyager 1 ve 2 güneş sisteminin keşfine çıktı; hâlâ yolculuk ediyor."},{c:'sanat',e:"Star Wars vizyona girdi; sinema ve pop kültür sonsuza dek değişti."}],
+  1978:[{c:'tip',e:"Dünyanın ilk tüp bebeği Louise Brown İngiltere'de dünyaya geldi."},{c:'muzik',e:"Saturday Night Fever albümü disko çılgınlığını tüm dünyaya taşıdı."}],
+  1979:[{c:'teknoloji',e:"Sony Walkman müziği taşınabilir kıldı; kulaklık kültürü doğdu."},{c:'sanat',e:"Türkiye'de çok sayıda sinema salonu kapasitesinin zirvesine ulaştı."}],
+  1980:[{c:'muzik',e:"John Lennon'ın 'Double Fantasy' albümü yayımlandı."},{c:'teknoloji',e:"Post-it notları satışa çıktı; 3M'in kazara icadı ofisleri renklendirdi."}],
+  1981:[{c:'uzay',e:"Space Shuttle Columbia ilk uçuşunu tamamladı."},{c:'muzik',e:"MTV yayın hayatına girdi; müzik videosu sanat formu oldu."}],
+  1982:[{c:'muzik',e:"Michael Jackson'ın 'Thriller' albümü tüm zamanların en çok satanı oldu."},{c:'tip',e:"MRI cihazı klinik kullanıma girdi; tıp görüntülemede devrim yaşandı."}],
+  1983:[{c:'teknoloji',e:"Cep telefonu ticari kullanıma açıldı; iletişim özgürleşti."},{c:'sanat',e:"Türk sinemasının altın çağı uluslararası ödüllerle taçlandı."}],
+  1984:[{c:'teknoloji',e:"Apple Macintosh grafik arayüzü herkese tanıttı."},{c:'spor',e:"Los Angeles Olimpiyatları'nda rekor sayıda ülke yarıştı."}],
+  1985:[{c:'muzik',e:"Live Aid konseri 1,9 milyar izleyiciyle dünyanın en büyük yardım gecesi oldu."},{c:'teknoloji',e:"Nintendo oyun dünyasını yeniden şekillendirdi."}],
+  1986:[{c:'uzay',e:"Halley Kuyrukluyıldızı 75 yıl sonra yeniden göründü; milyonlar gökyüzüne baktı."},{c:'sanat',e:"Musée d'Orsay Paris'te açıldı; empresyonizmin evi oldu."}],
+  1987:[{c:'moda',e:"Christian Lacroix kendi haute couture evini kurdu."},{c:'bilim',e:"Supernova 1987A gözlemlendi; 400 yılda ilk kez görülen yıldız patlaması oldu."}],
+  1988:[{c:'spor',e:"Seul Olimpiyatları'nda 160 ülke rekor katılım sağladı."},{c:'teknoloji',e:"Türkiye'de özel radyo ve televizyon yayıncılığı başladı."}],
+  1989:[{c:'teknoloji',e:"Tim Berners-Lee World Wide Web'in temelini attı; bilgi çağı doğdu."},{c:'muzik',e:"Grunge hareketi Seattle'dan dünyaya yayılmaya başladı."}],
+  1990:[{c:'uzay',e:"Hubble Uzay Teleskobu fırlatıldı; evrenin derinliklerini gördük."},{c:'sanat',e:"İstanbul'da modern sanat müzeleri açılmaya başladı."}],
+  1991:[{c:'teknoloji',e:"World Wide Web halka açıldı; insanlığın bilgi yolculuğu başladı."},{c:'muzik',e:"Nirvana'nın 'Nevermind' albümü müziğin yönünü değiştirdi."}],
+  1992:[{c:'teknoloji',e:"İlk SMS mesajı gönderildi: 'Merry Christmas'."},{c:'spor',e:"Barcelona Olimpiyatları rüya takımların turnuvası oldu."}],
+  1993:[{c:'teknoloji',e:"Mosaic web tarayıcısı interneti görsel kıldı."},{c:'sanat',e:"Schindler'in Listesi 7 Oscar aldı; sinema insanlığa ayna tuttu."}],
+  1994:[{c:'muzik',e:"Celine Dion ve Whitney Houston müziğin zirvesinde buluştu."},{c:'teknoloji',e:"İlk e-ticaret siparişi verildi; alışveriş anlayışı değişti."}],
+  1995:[{c:'teknoloji',e:"Amazon ve eBay kuruldu; internet ticaret devri başladı."},{c:'sanat',e:"Toy Story, ilk tam bilgisayar animasyonlu film olarak tarihe geçti."}],
+  1996:[{c:'bilim',e:"Dolly koyunu klonlandı; bilim kurgu gerçeğe dönüştü."},{c:'spor',e:"Atlanta Olimpiyatları'nda 197 ülke rekora ulaştı."}],
+  1997:[{c:'bilim',e:"Deep Blue satranç şampiyonunu yendi; yapay zeka yeni bir çağa girdi."},{c:'sanat',e:"Titanic filmi sinema tarihinin en büyük hasılatını yaptı."}],
+  1998:[{c:'teknoloji',e:"Google kuruldu; bilgiye erişim sonsuza dek kolaylaştı."},{c:'uzay',e:"Uluslararası Uzay İstasyonu'nun inşası başladı."}],
+  1999:[{c:'teknoloji',e:"Wi-Fi standardı belirlendi; kablolardan özgürleştik."},{c:'muzik',e:"Napster kuruldu; dijital müzik devrimi başladı."}],
+  2000:[{c:'bilim',e:"İnsan genomunun taslak haritası tamamlandı; yaşamın şifresi okundu."},{c:'sanat',e:"Tate Modern Londra'da açıldı; çağdaş sanatın en büyük tapınağı oldu."}],
+  2001:[{c:'teknoloji',e:"İlk iPod tanıtıldı; 1000 şarkı cebe sığdı."},{c:'sanat',e:"Wikipedia açıldı; bilgiye erişim demokratikleşti."}],
+  2002:[{c:'toplum',e:"Euro fiziksel banknot olarak tedavüle girdi."},{c:'muzik',e:"Norah Jones ve Coldplay müziğin zirvesine oturdu."}],
+  2003:[{c:'bilim',e:"İnsan Genomu Projesi tamamlandı; 3 milyar bazın şifresi çözüldü."},{c:'sanat',e:"Lord of the Rings 11 Oscar aldı; fantezi sinema zirveye ulaştı."}],
+  2004:[{c:'teknoloji',e:"Facebook kuruldu; sosyal ağ çağı başladı."},{c:'spor',e:"Yunanistan EURO 2004'ü kazandı; futbolun sürpriz şampiyonu oldu."}],
+  2005:[{c:'teknoloji',e:"YouTube açıldı; herkes yayıncı oldu."},{c:'muzik',e:"Adele ve Amy Winehouse yeni İngiliz müzik dalgasını başlattı."}],
+  2006:[{c:'doga',e:"Steve Irwin 'Timsah Avcısı' hayatını kaybetti; doğa sevgisi mirasını bıraktı."},{c:'teknoloji',e:"Twitter kuruldu; 140 karakterde dünya konuşmaya başladı."}],
+  2007:[{c:'teknoloji',e:"iPhone tanıtıldı; Steve Jobs tarihin en önemli ürünlerinden birini sundu."},{c:'sanat',e:"Ratatouille animasyon sinemasını yeni zirvelere taşıdı."}],
+  2008:[{c:'spor',e:"Michael Phelps Pekin'de 8 altın madalya alarak tarihe geçti."},{c:'muzik',e:"Adele'in '19' albümü dünyaya meydan okudu."}],
+  2009:[{c:'teknoloji',e:"WhatsApp kuruldu; mesajlaşma ücretsizleşti."},{c:'bilim',e:"Kepler Teleskobu fırlatıldı; öte-gezegenler aranmaya başlandı."}],
+  2010:[{c:'teknoloji',e:"iPad tanıtıldı; tablet bilgisayar çağı başladı."},{c:'sanat',e:"İstanbul Avrupa Kültür Başkenti ilan edildi; şehir dünyaya açıldı."}],
+  2011:[{c:'toplum',e:"Türkiye'de yüksek hızlı tren ağı genişledi; şehirler birbirine yaklaştı."},{c:'muzik',e:"Adele'in '21' albümü 30 milyon kopya satarak çağının en çok satanı oldu."}],
+  2012:[{c:'bilim',e:"Higgs bozonu CERN'de keşfedildi; maddenin sırrı çözüldü."},{c:'spor',e:"Londra Olimpiyatları 204 ülkenin katılımıyla açıldı."}],
+  2013:[{c:'teknoloji',e:"3D yazıcılar ev kullanımına girdi; üretim kişiselleşti."},{c:'uzay',e:"Voyager 1 güneş sistemini terk etti; insanlığın en uzak nesnesi oldu."}],
+  2014:[{c:'uzay',e:"Rosetta uzay aracı bir kuyrukluyıldıza indi."},{c:'spor',e:"Brezilya Dünya Kupası tarihin en fazla gol atılan turnuvası oldu."}],
+  2015:[{c:'bilim',e:"Plüton'un kalp şeklindeki yüzeyi New Horizons'dan herkesi duygulandırdı."},{c:'doga',e:"İklim değişikliği için dünya genelinde 20 milyon kişi harekete geçti."}],
+};
+
+function fmt(n){return Math.round(n).toLocaleString('tr-TR');}
+function fmtDec(n,d){return n.toFixed(d).replace('.',',');}
+function animateCount(el,target,duration,isFloat,decimals){
+  const start=performance.now();
+  function step(ts){
+    const p=Math.min((ts-start)/duration,1);
+    const ease=1-Math.pow(1-p,3);
+    el.textContent=isFloat?fmtDec(target*ease,decimals):fmt(target*ease);
+    if(p<1)requestAnimationFrame(step);
+    else el.textContent=isFloat?fmtDec(target,decimals):fmt(target);
+  }
+  requestAnimationFrame(step);
+}
+
+function ramazanCount(birth,end){return Math.floor((end-birth)/86400000/354.37);}
+
+const STATS_DEF=[
+  {label:'GÜNEŞ TURU',          key:'orbit',    desc:'kez Dünya güneşin etrafında döndü hayatınızda'},
+  {label:'SABAH',               key:'mornings', desc:'kez hayatınızda sabah oldu'},
+  {label:'GÖZ KIRPMA',          key:'blinks',   desc:'kez göz kırptınız (tahmini)'},
+  {label:'SU',                  key:'water',    desc:'litre su içtiniz (tahmini)'},
+  {label:'RAMAZAN',             key:'ramadan',  desc:'Ramazan ayı geçirdiniz'},
+  {label:'HAFTA',               key:'weeks',    desc:'hafta geçti hayatınızda'},
+  {label:'DÜNYAYA GELEN BEBEK', key:'babies',   desc:'Siz doğalı dünyaya bebek geldi'},
+  {label:'RÜYA',                key:'dreams',   desc:'kez rüya gördünüz (tahmini)'},
+  {label:'ADIM',                key:'steps',    desc:'kez adım attınız (tahmini)'},
+  {label:'METEOR',              key:'meteors',  desc:'kez meteor düştü (tahmini)'},
+  {label:'DOLUNAY',             key:'fullmoon', desc:'kez dolunay gördünüz'},
+];
+
+function renderStats(vals){
+  const grid=document.getElementById('stats-grid');
+  grid.innerHTML='';
+  STATS_DEF.forEach((def,i)=>{
+    const div=document.createElement('div');
+    div.className='stat-item';
+    div.innerHTML=`<div class="stat-label-txt">${def.label}</div><div class="stat-value-txt" id="sv-${def.key}">0</div><div class="stat-desc-txt">${def.desc}</div>`;
+    grid.appendChild(div);
+    setTimeout(()=>{animateCount(document.getElementById('sv-'+def.key),vals[def.key],1200,!!def.float,def.dec||0);},80+i*90);
+  });
+}
+
+function buildTimeline(birthYear,birthMonth,birthDay){
+  const ticksEl=document.getElementById('tl-ticks');ticksEl.innerHTML='';
+  const spanYears=now.getFullYear()-birthYear+2;
+  const firstDecade=Math.ceil(birthYear/10)*10;
+  const lastDecade=Math.floor(now.getFullYear()/10)*10;
+  for(let yr=firstDecade;yr<=lastDecade;yr+=10){
+    const pct=(yr-birthYear)/spanYears*100;
+    if(pct<=3||pct>=96)continue;
+    const tick=document.createElement('div');tick.className='timeline-tick';tick.style.left=pct+'%';ticksEl.appendChild(tick);
+    const lbl=document.createElement('div');lbl.className='timeline-tick-label';lbl.style.left=pct+'%';lbl.textContent=yr;ticksEl.appendChild(lbl);
+  }
+  document.getElementById('tl-birth-lbl').textContent=birthDay+' '+MONTHS_TR[birthMonth-1]+' '+birthYear;
+  const pctNow=Math.min((now.getFullYear()+now.getMonth()/12-birthYear)/spanYears*100,96);
+  setTimeout(()=>{
+    document.getElementById('tl-fill').style.width=pctNow+'%';
+    document.getElementById('tl-dot').style.left=pctNow+'%';
+    document.getElementById('tl-now-lbl').style.left=pctNow+'%';
+  },120);
+}
+
+function buildHistory(birthYear){
+  const container=document.getElementById('history-items');container.innerHTML='';
+  const allYears=Object.keys(HISTORY).map(Number);
+  const nearby=allYears.sort((a,b)=>Math.abs(a-birthYear)-Math.abs(b-birthYear)).slice(0,14).sort((a,b)=>a-b);
+  const catCount={};const selected=[];
+  nearby.forEach(yr=>{
+    const entries=HISTORY[yr];if(!Array.isArray(entries))return;
+    entries.forEach(entry=>{
+      if(selected.length>=10)return;
+      const c=entry.c;if(!catCount[c])catCount[c]=0;
+      if(catCount[c]<2){selected.push({yr,entry});catCount[c]++;}
+    });
+  });
+  selected.sort((a,b)=>a.yr-b.yr);
+  selected.forEach(({yr,entry})=>{
+    const div=document.createElement('div');div.className='history-entry';
+    div.innerHTML=`<span class="history-cat">${CAT[entry.c]||entry.c}</span><span class="history-yr">${yr}</span><span class="history-ev">${entry.e}</span>`;
+    container.appendChild(div);
+  });
+}
+
+function buildQR(y,m,d){
+  const canvas=document.getElementById('qr-canvas');canvas.getContext('2d').clearRect(0,0,108,108);
+  try{
+    const tmp=document.createElement('div');document.body.appendChild(tmp);
+    const url=window.location.origin+window.location.pathname+'?d='+d+'&m='+m+'&y='+y;
+    new QRCode(tmp,{text:url,width:100,height:100,colorDark:'#1a1410',colorLight:'#f5f0e0',correctLevel:QRCode.CorrectLevel.M});
+    setTimeout(()=>{const img=tmp.querySelector('img')||tmp.querySelector('canvas');if(img){document.getElementById('qr-canvas').getContext('2d').drawImage(img,4,4,100,100);}document.body.removeChild(tmp);},220);
+  }catch(e){}
+}
+
+let kioskTimer=null,kioskReset=null;
+const KIOSK_SECONDS=60;
+function stopKioskTimer(){
+  clearInterval(kioskTimer);kioskTimer=null;
+  if(kioskReset){document.removeEventListener('touchstart',kioskReset);document.removeEventListener('mousedown',kioskReset);kioskReset=null;}
+  document.getElementById('kiosk-bar').classList.add('hidden');
+}
+function startKioskTimer(){
+  const bar=document.getElementById('kiosk-bar'),fill=document.getElementById('kiosk-timer-fill'),cd=document.getElementById('kiosk-countdown');
+  bar.classList.remove('hidden');let remaining=KIOSK_SECONDS;fill.style.width='100%';cd.textContent=remaining;
+  kioskReset=function(){clearInterval(kioskTimer);remaining=KIOSK_SECONDS;fill.style.width='100%';cd.textContent=remaining;startCountdown();};
+  document.addEventListener('touchstart',kioskReset,{passive:true});document.addEventListener('mousedown',kioskReset);
+  function startCountdown(){kioskTimer=setInterval(()=>{remaining--;fill.style.width=(remaining/KIOSK_SECONDS*100)+'%';cd.textContent=remaining;if(remaining<=0){stopKioskTimer();resetForm();}},1000);}
+  startCountdown();
+}
+
+function calculate(){
+  const day=parseInt(document.getElementById('inp-day').value);
+  const month=parseInt(document.getElementById('inp-month').value);
+  const year=parseInt(document.getElementById('inp-year').value);
+  const errEl=document.getElementById('error-msg');
+  if(!day||!month||!year||year<1924||year>2015||day<1||day>31){errEl.style.display='block';return;}
+  errEl.style.display='none';
+  const birth=new Date(year,month-1,day);
+  if(isNaN(birth.getTime())||birth>=now){errEl.style.display='block';return;}
+  const diffMs=now-birth,diffDays=diffMs/86400000,diffYears=diffMs/(365.25*86400000),totalYears=Math.floor(diffYears);
+  const rem=new Date(birth);rem.setFullYear(rem.getFullYear()+totalYears);
+  const remMs=now-rem,remMonths=Math.floor(remMs/(30.44*86400000)),remDays=Math.floor((remMs-remMonths*30.44*86400000)/86400000);
+  document.getElementById('res-years').textContent=totalYears;
+  document.getElementById('res-years-text').textContent='yıl, '+remMonths+' ay, '+remDays+' gün yaşadınız';
+  ['tl-fill','tl-dot','tl-now-lbl'].forEach(id=>{const el=document.getElementById(id);el.style.transition='none';if(id==='tl-fill')el.style.width='0%';else el.style.left='0%';});
+  void document.getElementById('tl-fill').offsetWidth;
+  document.getElementById('tl-fill').style.transition='width 1.4s cubic-bezier(0.4,0,0.2,1)';
+  document.getElementById('tl-dot').style.transition='left 1.4s cubic-bezier(0.4,0,0.2,1)';
+  document.getElementById('tl-now-lbl').style.transition='left 1.4s cubic-bezier(0.4,0,0.2,1)';
+  renderStats({orbit:diffYears,mornings:diffDays,blinks:diffDays*14400,water:diffDays*2,ramadan:ramazanCount(birth,now),weeks:diffDays/7,babies:diffDays*385000,dreams:diffDays*4,steps:diffDays*8000,meteors:diffDays*48.5,fullmoon:diffDays/29.53});
+  buildTimeline(year,month,day);buildHistory(year);buildQR(year,month,day);
+  document.getElementById('form-section').style.display='none';
+  const res=document.getElementById('results');res.style.display='block';res.classList.remove('show');void res.offsetWidth;res.classList.add('show');
+  window.scrollTo({top:0,behavior:'smooth'});startKioskTimer();
+}
+
+function resetForm(){
+  stopKioskTimer();
+  document.getElementById('results').style.display='none';document.getElementById('results').classList.remove('show');
+  document.getElementById('form-section').style.display='flex';
+  document.getElementById('inp-day').value='';document.getElementById('inp-month').value='';document.getElementById('inp-year').value='';
+  document.getElementById('error-msg').style.display='none';
+  window.scrollTo({top:0,behavior:'instant'});
+}
+
+(function(){
+  const p=new URLSearchParams(window.location.search);
+  if(p.get('d')&&p.get('m')&&p.get('y')){
+    document.getElementById('inp-day').value=p.get('d');document.getElementById('inp-month').value=p.get('m');document.getElementById('inp-year').value=p.get('y');
+    setTimeout(calculate,350);
+  }
+})();
+</script>
+</body>
+</html>

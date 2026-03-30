@@ -269,18 +269,18 @@ function animateCount(el,target,duration){
   requestAnimationFrame(step);
 }
 function ramazanCount(birth,end){return Math.floor((end-birth)/86400000/354.37);}
+const CLOCKS_PER_DAY=1500000000/365;
 const STATS_DEF=[
-  {label:'GÜNEŞ TURU',          key:'orbit',     desc:'kez Dünya güneşin etrafında döndü hayatınızda'},
-  {label:'SABAH',               key:'mornings',  desc:'kez hayatınızda sabah oldu'},
   {label:'GÖZ KIRPMA',          key:'blinks',    desc:'kez göz kırptınız (tahmini)'},
   {label:'SU',                  key:'water',     desc:'litre su içtiniz (tahmini)'},
   {label:'RAMAZAN',             key:'ramadan',   desc:'Ramazan ayı geçirdiniz'},
   {label:'UYKU',                key:'sleepdays', desc:'gün uyuyarak geçirdiniz (tahmini)'},
-  {label:'DÜNYAYA GELEN BEBEK', key:'babies',    desc:'bebek dünyaya geldi siz doğalı'},
+  {label:'DÜNYAYA GELEN BEBEK', key:'babies',    desc:'siz doğalı dünyaya bebek geldi'},
   {label:'RÜYA',                key:'dreams',    desc:'kez rüya gördünüz (tahmini)'},
   {label:'ADIM',                key:'steps',     desc:'kez adım attınız (tahmini)'},
   {label:'METEOR',              key:'meteors',   desc:'kez meteor düştü (tahmini)'},
   {label:'DOLUNAY',             key:'fullmoon',  desc:'kez dolunay gördünüz'},
+  {label:'ÜRETİLEN SAAT',       key:'clocks',    desc:'siz doğalı saat üretildi'},
 ];
 function renderStats(vals){
   const grid=document.getElementById('stats-grid');grid.innerHTML='';
@@ -362,7 +362,7 @@ function calculate(){
   document.getElementById('tl-fill').style.transition='width 1.4s cubic-bezier(0.4,0,0.2,1)';
   document.getElementById('tl-dot').style.transition='left 1.4s cubic-bezier(0.4,0,0.2,1)';
   document.getElementById('tl-now-lbl').style.transition='left 1.4s cubic-bezier(0.4,0,0.2,1)';
-  renderStats({orbit:years,mornings:days,blinks:days*14400,water:days*2,ramadan:ramazanCount(birth,now),sleepdays:days*(8/24),babies:days*385000,dreams:days*4,steps:days*8000,meteors:days*48.5,fullmoon:days/29.53});
+  renderStats({blinks:days*14400,water:days*2,ramadan:ramazanCount(birth,now),sleepdays:days*(8/24),babies:days*385000,dreams:days*4,steps:days*8000,meteors:days*48.5,fullmoon:days/29.53,clocks:days*CLOCKS_PER_DAY});
   buildTimeline(year,month,day);buildHistory(year);buildQR(year,month,day);
   document.getElementById('form-section').style.display='none';
   const res=document.getElementById('results');res.style.display='block';res.classList.remove('show');void res.offsetWidth;res.classList.add('show');
